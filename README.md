@@ -1,4 +1,4 @@
-Enterprise-grade management infrastructure orchestrating multi-region cloud operations for TikTok e-commerce platform.
+Enterprise-grade management infrastructure orchestrating multi-region cloud operations for e-commerce platform.
 
 ## Overview
 
