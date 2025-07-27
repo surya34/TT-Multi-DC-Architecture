@@ -1,0 +1,38 @@
+# terraform/environments/production/us-east-1/terraform.tfvars.exaple
+# Primary configuration for production environment
+# Committed to Git (no secrets)
+
+# Environment Identity
+environment = "production"
+aws_region  = "us-east-1"
+
+# Network Architecture (Production VPC)
+vpc_cidr = "10.100.0.0/16"  # 65,536 IPs for production scale
+
+availability_zones = [
+  "us-east-1a",
+  "us-east-1b", 
+  "us-east-1c"
+]
+
+public_subnet_cidrs = [
+  "10.100.1.0/24",   # AZ-A: NAT, Bastion, ALB
+  "10.100.2.0/24",   # AZ-B: NAT, ALB  
+  "10.100.3.0/24"    # AZ-C: NAT, ALB
+]
+
+private_subnet_cidrs = [
+  "10.100.10.0/24",  # AZ-A: DevOps Tools
+  "10.100.11.0/24",  # AZ-B: GitOps Platform
+  "10.100.12.0/24"   # AZ-C: Monitoring Stack
+]
+
+# Disaster Recovery
+dr_region                 = "us-west-2"
+enable_cross_region_backup = true
+
+# Monitoring & Compliance  
+monitoring_retention_days = 90  # 3 months for compliance
+backup_retention_days     = 30  # Monthly backup retention
+enable_vpc_flow_logs      = true\
+
