@@ -1,104 +1,179 @@
-// ------------------------------------------------------------
-//  Variables – Management VPC  ❙  Production ❙ us‑east‑1
-// ------------------------------------------------------------
+# terraform/environments/production/us-east-1/variables.tf
 
+/**
+ * Variables - Management VPC Production US-East-1
+ * 
+ * Production best practice: No hardcoded defaults for environment-specific values
+ * Defaults only for truly universal constants
+ */
+
+# Core Configuration - No defaults (environment-specific)
 variable "aws_region" {
-  description = "AWS region to deploy resources into"
+  description = "AWS region for deployment"
   type        = string
-  default     = "us-east-1"
-
-  validation {
-    condition     = can(regex("^us-[a-z]+-[0-9]+$", var.aws_region))
-    error_message = "aws_region must be a valid AWS region, e.g. us-east-1."
-  }
+  # No default - must be explicitly set per environment
 }
 
 variable "environment" {
-  description = "Deployment environment (e.g. dev, staging, prod)"
+  description = "Environment name (production/staging/development)"
   type        = string
-  default     = "production"
+  # No default - prevents accidental deployment to wrong environment
+  
+  validation {
+    condition     = contains(["production", "staging", "development"], var.environment)
+    error_message = "Environment must be production, staging, or development."
+  }
 }
 
-variable "vpc_cidr" {
-  description = "CIDR block for the Management VPC"
+variable "aws_account_id" {
+  description = "AWS Account ID for environment"
   type        = string
-  default     = "10.100.0.0/16"
-
+  # No default - must match the target account
+  
   validation {
-    condition     = can(cidrnetmask(var.vpc_cidr))
-    error_message = "vpc_cidr must be a valid IPv4 CIDR block."
+    condition     = can(regex("^[0-9]{12}$", var.aws_account_id))
+    error_message = "AWS Account ID must be 12 digits."
   }
+}
+
+# Network Configuration - No defaults (architecture decisions)
+variable "vpc_cidr" {
+  description = "CIDR block for Management VPC"
+  type        = string
+  # No default - each environment needs different CIDR
 }
 
 variable "availability_zones" {
-  description = "AWS AZs to use in this region"
+  description = "List of availability zones to use"
   type        = list(string)
-  default     = ["us-east-1a", "us-east-1b", "us-east-1c"]
+  # No default - region-specific
 }
 
 variable "public_subnet_cidrs" {
-  description = "CIDR blocks for public subnets (must match AZ count)"
+  description = "CIDR blocks for public subnets"
   type        = list(string)
-  default     = ["10.100.1.0/24", "10.100.2.0/24", "10.100.3.0/24"]
+  # No default - must align with VPC CIDR
 }
 
 variable "private_subnet_cidrs" {
-  description = "CIDR blocks for private subnets (must match AZ count)"
+  description = "CIDR blocks for private subnets"
   type        = list(string)
-  default     = ["10.100.10.0/24", "10.100.11.0/24", "10.100.12.0/24"]
+  # No default - must align with VPC CIDR
 }
 
-# Ensure subnet lists align with AZ list
-locals {
-  subnet_length_ok = (
-    length(var.availability_zones) == length(var.public_subnet_cidrs) &&
-    length(var.availability_zones) == length(var.private_subnet_cidrs)
-  )
-}
-
+# Security Configuration - Sensitive, no defaults
 variable "key_pair_name" {
-  description = "Existing EC2 key pair name for SSH access"
+  description = "EC2 Key pair name for SSH access"
   type        = string
-  default     = "mgmt-vpc-prod-key"
+  sensitive   = true  # Marks as sensitive in logs
+  # No default - security best practice
 }
 
+variable "allowed_ssh_cidrs" {
+  description = "CIDR blocks allowed to SSH to bastion"
+  type        = list(string)
+  sensitive   = true
+  default     = []  # Empty default is safe
+}
+
+# Cost Optimization Flags - Defaults make sense here
 variable "enable_nat_gateway" {
-  description = "true = use NAT Gateway, false = launch NAT instance (cost‑optimized)"
+  description = "Use NAT Gateway (true) or NAT Instance (false)"
   type        = bool
-  default     = false
-}
-
-variable "nat_instance_type" {
-  description = "Instance type for NAT instance (used only if enable_nat_gateway = false)"
-  type        = string
-  default     = "t3.micro"
-}
-
-variable "instance_types" {
-  description = "Instance types for DevOps, GitOps, Monitoring stacks"
-  type        = map(string)
-  default = {
-    devops      = "t3.micro"
-    gitops      = "t3.micro"
-    monitoring  = "t3.micro"
-  }
-}
-
-variable "monitoring_retention_days" {
-  description = "Prometheus retention in days"
-  type        = number
-  default     = 7
+  default     = false  # NAT instance is our cost-optimized default
 }
 
 variable "enable_vpc_flow_logs" {
-  description = "Enable VPC Flow Logs for security/compliance"
+  description = "Enable VPC Flow Logs for security compliance"
   type        = bool
-  default     = true
+  default     = true  # Security by default
 }
 
-# ---------- Validations that span multiple variables ----------
-validation "subnet_list_lengths" {
-  condition     = local.subnet_length_ok
-  error_message = "public_subnet_cidrs and private_subnet_cidrs must have the same length as availability_zones."
+# Instance Types - No defaults (cost implications)
+variable "instance_types" {
+  description = "Instance types for each component"
+  type = object({
+    nat        = string
+    devops     = string
+    gitops     = string
+    monitoring = string
+  })
+  # No default - pricing varies by region/environment
 }
 
+# Scaling Configuration - No defaults (workload-specific)
+variable "auto_scaling_config" {
+  description = "Auto-scaling configuration for instance groups"
+  type = object({
+    devops_min     = number
+    devops_max     = number
+    devops_desired = number
+    gitops_min     = number
+    gitops_max     = number
+    gitops_desired = number
+  })
+  # No default - depends on workload
+}
+
+# Monitoring Configuration
+variable "monitoring_retention_days" {
+  description = "Prometheus retention in days"
+  type        = number
+  # No default - cost/compliance implications
+}
+
+variable "backup_retention_days" {
+  description = "Backup retention period in days"
+  type        = number
+  # No default - compliance requirement
+}
+
+# Tagging Strategy - Some defaults acceptable
+variable "mandatory_tags" {
+  description = "Mandatory tags for all resources"
+  type        = map(string)
+  # No default - organization-specific
+}
+
+variable "cost_center" {
+  description = "Cost center for billing"
+  type        = string
+  # No default - department-specific
+}
+
+variable "data_classification" {
+  description = "Data classification level"
+  type        = string
+  default     = "internal"  # Safe default
+  
+  validation {
+    condition     = contains(["public", "internal", "confidential", "restricted"], var.data_classification)
+    error_message = "Data classification must be public, internal, confidential, or restricted."
+  }
+}
+
+# Feature Flags
+variable "enable_enhanced_monitoring" {
+  description = "Enable enhanced CloudWatch monitoring"
+  type        = bool
+  default     = false  # Cost consideration
+}
+
+variable "enable_auto_shutdown" {
+  description = "Enable automatic shutdown of non-critical instances"
+  type        = bool
+  default     = false  # Explicit opt-in
+}
+
+# Disaster Recovery
+variable "dr_region" {
+  description = "Disaster recovery region"
+  type        = string
+  # No default - must be explicitly chosen
+}
+
+variable "enable_cross_region_backup" {
+  description = "Enable cross-region backup"
+  type        = bool
+  default     = false  # Cost consideration
+}
