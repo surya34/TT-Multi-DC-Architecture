@@ -1,16 +1,12 @@
-# Read backend configuration
-
-BUCKET_NAME=$(cat .terraform-backend-bucket)
-TABLE_NAME=$(cat .terraform-backend-table)
 
 # Create backend configuration
 
 terraform {
   backend "s3" {
-    bucket         = "${BUCKET_NAME}"
+    bucket         = "terraform-state-106369262271-management"
     key            = "production/us-east-1/management-vpc/terraform.tfstate"
     region         = "us-east-1"
-    dynamodb_table = "${TABLE_NAME}"
+    dynamodb_table = "terraform-state-locks"
     encrypt        = true
     
     # Enterprise settings
