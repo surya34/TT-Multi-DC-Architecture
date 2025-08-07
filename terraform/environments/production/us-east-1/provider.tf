@@ -6,7 +6,7 @@
 
 terraform {
   required_version = ">= 1.5.0"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -21,11 +21,11 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
-  
+
   # Enterprise tagging strategy
   default_tags {
     tags = {
-      Environment         = var.environment
+      Environment        = var.environment
       Project            = "management-vpc"
       ManagedBy          = "terraform"
       CostCenter         = "platform-engineering"
@@ -36,7 +36,7 @@ provider "aws" {
       LastUpdated        = timestamp()
     }
   }
-  
+
   # Assume role for production access (optional)
   # assume_role {
   #   role_arn = "arn:aws:iam::${var.account_id}:role/TerraformExecutionRole"

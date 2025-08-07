@@ -27,8 +27,6 @@ resource "aws_iam_role" "flow_logs" {
   count = var.enable_flow_logs ? 1 : 0
   
   name = "${var.name_prefix}-flow-logs-role"
-  
-  assume_role_policy = json
 
   assume_role_policy = jsonencode({
    Version = "2012-10-17"

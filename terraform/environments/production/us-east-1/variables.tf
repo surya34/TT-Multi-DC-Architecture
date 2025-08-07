@@ -18,7 +18,7 @@ variable "environment" {
   description = "Environment name (production/staging/development)"
   type        = string
   # No default - prevents accidental deployment to wrong environment
-  
+
   validation {
     condition     = contains(["production", "staging", "development"], var.environment)
     error_message = "Environment must be production, staging, or development."
@@ -29,7 +29,7 @@ variable "aws_account_id" {
   description = "AWS Account ID for environment"
   type        = string
   # No default - must match the target account
-  
+
   validation {
     condition     = can(regex("^[0-9]{12}$", var.aws_account_id))
     error_message = "AWS Account ID must be 12 digits."
@@ -65,7 +65,7 @@ variable "private_subnet_cidrs" {
 variable "key_pair_name" {
   description = "EC2 Key pair name for SSH access"
   type        = string
-  sensitive   = true  # Marks as sensitive in logs
+  sensitive   = true # Marks as sensitive in logs
   # No default - security best practice
 }
 
@@ -73,20 +73,20 @@ variable "allowed_ssh_cidrs" {
   description = "CIDR blocks allowed to SSH to bastion"
   type        = list(string)
   sensitive   = true
-  default     = []  # Empty default is safe
+  default     = [] # Empty default is safe
 }
 
 # Cost Optimization Flags - Defaults make sense here
 variable "enable_nat_gateway" {
   description = "Use NAT Gateway (true) or NAT Instance (false)"
   type        = bool
-  default     = false  # NAT instance is our cost-optimized default
+  default     = false # NAT instance is our cost-optimized default
 }
 
 variable "enable_vpc_flow_logs" {
   description = "Enable VPC Flow Logs for security compliance"
   type        = bool
-  default     = true  # Security by default
+  default     = true # Security by default
 }
 
 # Instance Types - No defaults (cost implications)
@@ -144,8 +144,8 @@ variable "cost_center" {
 variable "data_classification" {
   description = "Data classification level"
   type        = string
-  default     = "internal"  # Safe default
-  
+  default     = "internal" # Safe default
+
   validation {
     condition     = contains(["public", "internal", "confidential", "restricted"], var.data_classification)
     error_message = "Data classification must be public, internal, confidential, or restricted."
@@ -156,13 +156,13 @@ variable "data_classification" {
 variable "enable_enhanced_monitoring" {
   description = "Enable enhanced CloudWatch monitoring"
   type        = bool
-  default     = false  # Cost consideration
+  default     = false # Cost consideration
 }
 
 variable "enable_auto_shutdown" {
   description = "Enable automatic shutdown of non-critical instances"
   type        = bool
-  default     = false  # Explicit opt-in
+  default     = false # Explicit opt-in
 }
 
 # Disaster Recovery
@@ -175,5 +175,5 @@ variable "dr_region" {
 variable "enable_cross_region_backup" {
   description = "Enable cross-region backup"
   type        = bool
-  default     = false  # Cost consideration
+  default     = false # Cost consideration
 }

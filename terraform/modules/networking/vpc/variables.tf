@@ -45,29 +45,35 @@ variable "availability_zones" {
 }
 
 variable "public_subnet_cidrs" {
-  description = "CIDR blocks for public subnets"
+  description = "CIDR blocks for public subnets (must match number of AZs)"
   type        = list(string)
   
+  # Can only validate this variable itself
   validation {
-    condition     = length(var.public_subnet_cidrs) == length(var.availability_zones)
-    error_message = "Number of public subnet CIDRs must match number of availability zones."
+    condition     = length(var.public_subnet_cidrs) >= 2 && length(var.public_subnet_cidrs) <= 6
+    error_message = "Between 2 and 6 public subnet CIDRs must be specified."
+  }
+  
+  validation {
+    condition     = alltrue([for cidr in var.public_subnet_cidrs : can(cidrhost(cidr, 0))])
+    error_message = "All public subnet CIDRs must be valid IPv4 CIDR blocks."
   }
 }
 
 variable "private_subnet_cidrs" {
-  description = "CIDR blocks for private subnets"
+  description = "CIDR blocks for private subnets (must match number of AZs)"
   type        = list(string)
   
+  # Can only validate this variable itself
   validation {
-    condition     = length(var.private_subnet_cidrs) == length(var.availability_zones)
-    error_message = "Number of private subnet CIDRs must match number of availability zones."
+    condition     = length(var.private_subnet_cidrs) >= 2 && length(var.private_subnet_cidrs) <= 6
+    error_message = "Between 2 and 6 private subnet CIDRs must be specified."
   }
-}
-
-variable "database_subnet_cidrs" {
-  description = "CIDR blocks for database subnets"
-  type        = list(string)
-  default     = []
+  
+  validation {
+    condition     = alltrue([for cidr in var.private_subnet_cidrs : can(cidrhost(cidr, 0))])
+    error_message = "All private subnet CIDRs must be valid IPv4 CIDR blocks."
+  }
 }
 
 # VPC Features

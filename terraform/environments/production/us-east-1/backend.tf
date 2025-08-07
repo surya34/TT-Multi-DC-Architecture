@@ -8,7 +8,7 @@ terraform {
     region         = "us-east-1"
     dynamodb_table = "terraform-state-locks"
     encrypt        = true
-    
+
     # Enterprise settings
     skip_region_validation      = false
     skip_credentials_validation = false

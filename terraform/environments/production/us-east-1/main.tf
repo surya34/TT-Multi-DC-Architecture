@@ -16,40 +16,40 @@
  */
 
 locals {
-    name_prefix = "${var.environment}-mgmt-vpc"
+  name_prefix = "${var.environment}-mgmt-vpc"
 }
 
 # Get current public IP for security group configuration
 
 data "http" "my_ip" {
-    url = "http://checkip.amazonaws.com" 
+  url = "http://checkip.amazonaws.com"
 
 }
 
 # vpc module
 
 module "vpc" {
-    source = "../../../modules/Networking/vpc"
+  source = "../../../modules/Networking/vpc"
 
-    vpc_cidr = var.vpc_cidr
-    availability_zones = var.availability_zones
-    public_subnet_cidrs = var.public_subnet_cidrs
-    private_subnet_cidrs = var.private_subnet_cidrs
+  vpc_cidr             = var.vpc_cidr
+  availability_zones   = var.availability_zones
+  public_subnet_cidrs  = var.public_subnet_cidrs
+  private_subnet_cidrs = var.private_subnet_cidrs
 
 
-    enable_dns_hostnames = true
-    enable_dns_support   = true
+  enable_dns_hostnames = true
+  enable_dns_support   = true
 
-    # VPC Flow Logs for compliance
+  # VPC Flow Logs for compliance
 
-    enable_flow_logs = var.enable_vpc_flow_logs 
+  enable_flow_logs = var.enable_vpc_flow_logs
 
-    tags = {
-        
-        Name        = "${local.name_prefix}-vpc"
-        Purpose     = "management-infrastructure"
-        NetworkTier = "management"
+  tags = {
 
-    }
+    Name        = "${local.name_prefix}-vpc"
+    Purpose     = "management-infrastructure"
+    NetworkTier = "management"
+
+  }
 
 }
