@@ -217,6 +217,7 @@ resource "aws_route_table" "database" {
 }
 
 # Associate database subnets with database route table
+
 resource "aws_route_table_association" "database" {
   count = var.create_database_subnets ? length(var.availability_zones) : 0
   
@@ -228,7 +229,7 @@ resource "aws_route_table_association" "database" {
 resource "aws_vpc_dhcp_options" "main" {
   count = var.enable_custom_dhcp_options ? 1 : 0
   
-  domain_name          = var.dhcp_options_domain_name
+  domain_name          = var.enable_custom_dhcp_options
   domain_name_servers  = var.dhcp_options_domain_name_servers
   ntp_servers          = var.dhcp_options_ntp_servers
   netbios_name_servers = var.dhcp_options_netbios_name_servers

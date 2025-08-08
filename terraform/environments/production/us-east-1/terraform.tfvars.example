@@ -27,6 +27,10 @@ private_subnet_cidrs = [
   "10.100.12.0/24"   # AZ-C: Monitoring Stack
 ]
 
+database_subnet_cidrs = [
+  "10.0.10.0/32"  # AZ-A: DevOps Tools
+]
+
 # Disaster Recovery
 dr_region                 = "us-west-2"
 enable_cross_region_backup = true

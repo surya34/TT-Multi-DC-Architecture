@@ -61,6 +61,12 @@ variable "private_subnet_cidrs" {
   # No default - must align with VPC CIDR
 }
 
+variable "database_subnet_cidrs" {
+  description = "CIDR blocks for database subnets"
+  type        = list(string)
+  # No default - must align with VPC CIDR
+}
+
 # Security Configuration - Sensitive, no defaults
 variable "key_pair_name" {
   description = "EC2 Key pair name for SSH access"

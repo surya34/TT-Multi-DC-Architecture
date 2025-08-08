@@ -110,6 +110,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "flow_logs" {
  rule {
    id     = "expire-old-logs"
    status = "Enabled"
+
+   filter {
+      prefix = ""     # explicitly targets all objects
+    }
    
    expiration {
      days = var.flow_logs_retention_days

@@ -76,6 +76,12 @@ variable "private_subnet_cidrs" {
   }
 }
 
+variable "database_subnet_cidrs" {
+  description = "CIDR blocks for database subnets (must match number of AZs)"
+  type        = list(string)
+
+}
+
 # VPC Features
 variable "enable_dns_hostnames" {
   description = "Enable DNS hostnames in VPC"
@@ -157,6 +163,18 @@ variable "enable_flow_logs" {
   description = "Enable VPC Flow Logs"
   type        = bool
   default     = false
+}
+
+variable "flow_logs_kms_key_id" {
+  description = "kms key id for VPC Flow Logs"
+  type        = string
+  default     =  "1"
+}
+
+variable "flow_logs_destination_type" {
+  description = "flow logs destination"
+  type        = string
+  default     =  "s3"
 }
 
 variable "flow_logs_retention_days" {
