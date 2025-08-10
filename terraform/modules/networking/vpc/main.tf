@@ -42,6 +42,12 @@ resource "aws_vpc" "main" {
       Type = "management"
     }
   )
+  # Add this lifecycle block to ignore tags that are automatically added by AWS.
+  lifecycle {
+    ignore_changes = [
+      tags_all,
+    ]
+  }
 }
 
 # Internet Gateway

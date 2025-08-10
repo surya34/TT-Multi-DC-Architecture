@@ -40,3 +40,21 @@ monitoring_retention_days = 90  # 3 months for compliance
 backup_retention_days     = 30  # Monthly backup retention
 enable_vpc_flow_logs      = true\
 
+
+
+auto_scaling_config = {
+  devops_min     = 2
+  devops_max     = 5
+  devops_desired = 3
+  gitops_min     = 1
+  gitops_max     = 4
+  gitops_desired = 2
+}
+
+instance_types = {
+    nat        = "t3.small"
+    devops     = "t3.small"
+    gitops     = "t3.small"
+    monitoring = "t3.small"
+  # No default - pricing varies by region/environment
+}

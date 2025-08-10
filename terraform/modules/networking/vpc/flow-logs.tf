@@ -6,13 +6,49 @@
  * Enables network traffic logging for security and compliance
  */
 
+ resource "aws_kms_key" "flow_logs_kms_key_id" {
+  description             = "An  symmetric encryption KMS key"
+  enable_key_rotation     = true
+  deletion_window_in_days = 20
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid = "Allow Account Root Full Access"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action = "kms:*"
+        Resource = "*"
+      },
+      {
+        Sid = "Allow CloudWatch Logs to use the key"
+        Effect = "Allow"
+        Principal = {
+          Service = "logs.${data.aws_region.current.name}.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt*",
+          "kms:Decrypt*",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+
+ }
+
 # CloudWatch Log Group for VPC Flow Logs
 resource "aws_cloudwatch_log_group" "flow_logs" {
   count = var.enable_flow_logs ? 1 : 0
   
   name              = "/aws/vpc/${var.name_prefix}"
   retention_in_days = var.flow_logs_retention_days
-  kms_key_id        = var.flow_logs_kms_key_id
+  kms_key_id        = aws_kms_key.flow_logs_kms_key_id.arn
   
   tags = merge(
     var.tags,
@@ -20,6 +56,12 @@ resource "aws_cloudwatch_log_group" "flow_logs" {
       Name = "${var.name_prefix}-flow-logs"
     }
   )
+  # Add this lifecycle block to ignore tags that are automatically added by AWS.
+  lifecycle {
+    ignore_changes = [
+      tags_all,
+    ]
+  }
 }
 
 # IAM Role for VPC Flow Logs
@@ -45,6 +87,12 @@ resource "aws_iam_role" "flow_logs" {
      Name = "${var.name_prefix}-flow-logs-role"
    }
  )
+  # Add this lifecycle block to ignore tags that are automatically added by AWS.
+  lifecycle {
+    ignore_changes = [
+      tags_all,
+    ]
+  }
 }
 
 # IAM Policy for VPC Flow Logs
@@ -100,6 +148,12 @@ resource "aws_s3_bucket" "flow_logs" {
      Name = "${var.name_prefix}-flow-logs"
    }
  )
+ # Add this lifecycle block to ignore tags that are automatically added by AWS.
+  lifecycle {
+    ignore_changes = [
+      tags_all,
+    ]
+  }
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "flow_logs" {

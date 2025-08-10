@@ -37,11 +37,16 @@ provider "aws" {
     }
   }
 
+  ignore_tags {
+    keys = ["BackupPolicy", "Compliance","CostCenter","DataClassification","DisasterRecovery","Environment","LastUpdated","ManagedBy","Project",""]
+  }
+
   # Assume role for production access (optional)
   # assume_role {
   #   role_arn = "arn:aws:iam::${var.account_id}:role/TerraformExecutionRole"
   # }
 }
+
 
 provider "http" {}
 

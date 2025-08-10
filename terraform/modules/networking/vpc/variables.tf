@@ -79,7 +79,6 @@ variable "private_subnet_cidrs" {
 variable "database_subnet_cidrs" {
   description = "CIDR blocks for database subnets (must match number of AZs)"
   type        = list(string)
-
 }
 
 # VPC Features
@@ -165,11 +164,6 @@ variable "enable_flow_logs" {
   default     = false
 }
 
-variable "flow_logs_kms_key_id" {
-  description = "kms key id for VPC Flow Logs"
-  type        = string
-  default     =  "1"
-}
 
 variable "flow_logs_destination_type" {
   description = "flow logs destination"
@@ -180,7 +174,7 @@ variable "flow_logs_destination_type" {
 variable "flow_logs_retention_days" {
   description = "VPC Flow Logs retention in days"
   type        = number
-  default     = 30
+  default     = 90
 }
 
 variable "flow_logs_traffic_type" {
