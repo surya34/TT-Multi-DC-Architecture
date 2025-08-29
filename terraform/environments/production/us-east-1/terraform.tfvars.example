@@ -38,7 +38,7 @@ enable_cross_region_backup = true
 # Monitoring & Compliance  
 monitoring_retention_days = 90  # 3 months for compliance
 backup_retention_days     = 30  # Monthly backup retention
-enable_vpc_flow_logs      = true\
+enable_vpc_flow_logs      = true
 
 
 
@@ -57,4 +57,10 @@ instance_types = {
     gitops     = "t3.small"
     monitoring = "t3.small"
   # No default - pricing varies by region/environment
+}
+
+mandatory_tags = {
+  "Project"    = "ManagementVPC"
+  "Environment" = "production"
+  "Owner"       = "devops-team"
 }

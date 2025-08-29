@@ -38,7 +38,7 @@ provider "aws" {
   }
 
   ignore_tags {
-    keys = ["BackupPolicy", "Compliance","CostCenter","DataClassification","DisasterRecovery","Environment","LastUpdated","ManagedBy","Project",""]
+    keys = ["BackupPolicy", "Compliance", "CostCenter", "DataClassification", "DisasterRecovery", "Environment", "LastUpdated", "ManagedBy", "Project", ""]
   }
 
   # Assume role for production access (optional)
