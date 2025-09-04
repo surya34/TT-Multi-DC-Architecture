@@ -118,14 +118,14 @@ resource "aws_iam_policy" "lambda_regional" {
 resource "aws_iam_role_policy_attachment" "lambda_regional_attach" {
   role       = data.terraform_remote_state.prod_global.outputs.lambda_exec_role_name
   policy_arn = aws_iam_policy.lambda_regional.arn
- }
+}
 
 # Now create Lambda using the global role
 resource "aws_lambda_function" "remediator" {
   function_name = "s3-public-acl-remediator"
   role          = data.terraform_remote_state.prod_global.outputs.lambda_exec_role_arn
-   filename      = "build/build.zip"
-   handler       = "handler.handler"
+  filename      = "build/build.zip"
+  handler       = "handler.handler"
   runtime       = "python3.12"
   timeout       = 30
   memory_size   = 512
@@ -141,4 +141,53 @@ resource "aws_lambda_function" "remediator" {
   }
   reserved_concurrent_executions = 0 # cap to protect downstreams
 }
+
+# module for cloud watch
+
+module "cloud_watch_rule" {
+  source      = "../../../modules/cloud_watch/cloud_watch_rule"
+  name        = "s3-acl-events"
+  description = "Detect object-level ACL changes"
+}
+
+# setting sqs as target for the above eventbus/cloudwatch rule
+
+resource "aws_cloudwatch_event_target" "to_sqs" {
+ rule = module.cloud_watch_rule.rule_name
+ arn = module.sqs_fifo.queue_arn
+ sqs_target {
+    message_group_id = "s3-remediator-events" 
+  }
+  input_transformer {
+    input_paths = {
+     bucket = "$.detail.bucket.name",
+     key = "$.detail.object.key",
+     versionId = "$.detail.object.version-id"
+ }
+ input_template = <<EOF
+ {
+ "bucket":"<bucket>",
+ "key":"<key>",
+ "versionId":"<versionId>"
+ }
+ EOF
+}
+# EventBridge retry + DLQ (optional on the rule itself)
+dead_letter_config { 
+ arn = module.sqs_fifo.queue_event_bridge_arn_dlq
+}
+retry_policy { 
+maximum_retry_attempts = 6
+maximum_event_age_in_seconds = 3600 
+ }
+}
+
+# SQS → Lambda mapping , modularize later 
+
+resource "aws_lambda_event_source_mapping" "sqs_es" {
+event_source_arn = module.sqs_fifo.queue_arn
+function_name = aws_lambda_function.remediator.function_name
+
+}
+
 

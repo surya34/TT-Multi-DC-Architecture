@@ -26,3 +26,11 @@ resource "aws_sqs_queue" "main" {
 
   tags = var.tags
 }
+
+# adding standard sqs queue for eventbridge because fifo queue cannot be used as dlq .
+
+resource "aws_sqs_queue" "eventbridge_dlq" {
+  name = "s3-remediator-eventbridge-dlq"
+  # This queue is NOT a FIFO queue, so no fifo_queue = true
+}
+
