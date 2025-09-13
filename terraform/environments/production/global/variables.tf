@@ -9,6 +9,7 @@
 variable "aws_region" {
   description = "AWS region for deployment"
   type        = string
+
   # No default - must be explicitly set per environment
 }
 
