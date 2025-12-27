@@ -33,7 +33,7 @@ provider "aws" {
       Compliance         = "soc2-pci"
       BackupPolicy       = "daily"
       DisasterRecovery   = "multi-region"
-     # LastUpdated        = timestamp()
+      # LastUpdated        = timestamp()
     }
   }
 

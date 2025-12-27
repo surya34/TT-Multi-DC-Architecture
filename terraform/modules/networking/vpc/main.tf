@@ -65,7 +65,7 @@ resource "aws_internet_gateway" "main" {
 # NAT instance
 
 resource "aws_instance" "nat" {
-  count = var.create_nat_instance ? 1 : 0
+  count = var.create_nat_instance ? length(var.availability_zones) : 0
 
   ami           = var.nat_ami_id
   instance_type = var.nat_instance_type
@@ -91,8 +91,6 @@ resource "aws_instance" "nat" {
 resource "aws_eip" "nat" {
   count  = var.create_nat_instance ? 1 : 0
   domain = "vpc"
-  instance_id = aws_instance.nat[0].id
-  allocation_id = aws_eip.nat[0].id
   
   tags = merge(
     var.tags,
@@ -104,6 +102,13 @@ resource "aws_eip" "nat" {
   
   depends_on = [aws_internet_gateway.main]
 }
+
+resource "aws_eip_association" "nat" {
+  count      = var.create_nat_instance ? 1 : 0
+  instance_id   = aws_instance.nat[0].id
+  allocation_id = aws_eip.nat[0].id
+}
+
 
 # SG for NAT instance
 
@@ -273,7 +278,7 @@ resource "aws_route" "private_to_nat" {
 
   route_table_id         = aws_route_table.private[count.index].id
   destination_cidr_block = "0.0.0.0/0"
-  instance_id            = aws_instance.nat[0].id
+  instance_id            = aws_instance.nat[count.index].id
   depends_on             = [aws_instance.nat]
 }
 
