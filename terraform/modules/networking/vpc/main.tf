@@ -72,6 +72,7 @@ resource "aws_instance" "nat" {
   key_name      = var.key_name
   subnet_id     = aws_subnet.public[0].id   # Put NAT in the first public subnet
   associate_public_ip_address = true
+  security_groups = [aws_security_group.nat.name]
 
   source_dest_check = false   # required for NAT
 
@@ -103,6 +104,38 @@ resource "aws_eip" "nat" {
   
   depends_on = [aws_internet_gateway.main]
 }
+
+# SG for NAT instance
+
+resource "aws_security_group" "nat" {
+  name        = "${var.name_prefix}-nat-sg"
+  description = "Security group for NAT instance"
+  vpc_id      = aws_vpc.main.id
+
+  # Allow inbound from private subnets
+  ingress {
+    description      = "Allow traffic from private subnets"
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = var.private_subnet_cidrs
+    ipv6_cidr_blocks = var.enable_ipv6 ? [for s in aws_subnet.private[*].ipv6_cidr_block : s] : []
+  }
+
+  # Allow outbound to internet
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = var.enable_ipv6 ? ["::/0"] : []
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-nat-sg"
+  })
+}
+
 
 # Public Subnets (one per AZ)
 resource "aws_subnet" "public" {
@@ -241,6 +274,7 @@ resource "aws_route" "private_to_nat" {
   route_table_id         = aws_route_table.private[count.index].id
   destination_cidr_block = "0.0.0.0/0"
   instance_id            = aws_instance.nat[0].id
+  depends_on             = [aws_instance.nat]
 }
 
 
