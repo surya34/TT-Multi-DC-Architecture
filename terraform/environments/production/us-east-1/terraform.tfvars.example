@@ -9,6 +9,8 @@ aws_region  = "us-east-1"
 # Network Architecture (Production VPC)
 vpc_cidr = "10.100.0.0/16"  # 65,536 IPs for production scale
 
+nat_ami_id = "ami-03f9680ef0c07a3d1"
+
 availability_zones = [
   "us-east-1a",
   "us-east-1b", 

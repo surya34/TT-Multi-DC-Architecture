@@ -171,4 +171,21 @@ resource "aws_lambda_event_source_mapping" "sqs_es" {
 
 }
 
+module "eks_workers" {
+  source = "../../../modules/compute/eks-workers"
+  cluster_name        = prod-video-eks-us-east-1
+  private_subnet_ids  = module.vpc.private_subnet_ids
+  tags                = var.mandatory_tags
+}
+
+module "eks_aws_auth" {
+  source         = "../../../modules/security/eks-aws-auth"
+  node_role_arn  = module.eks_workers.node_role_arn
+
+  depends_on = [
+    module.eks_workers
+  ]
+}
+
+
 

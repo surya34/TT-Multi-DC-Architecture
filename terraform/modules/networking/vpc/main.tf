@@ -62,10 +62,36 @@ resource "aws_internet_gateway" "main" {
   )
 }
 
+# NAT instance
+
+resource "aws_instance" "nat" {
+  count = var.create_nat_instance ? 1 : 0
+
+  ami           = var.nat_ami_id
+  instance_type = var.nat_instance_type
+  key_name      = var.key_name
+  subnet_id     = aws_subnet.public[0].id   # Put NAT in the first public subnet
+  associate_public_ip_address = true
+
+  source_dest_check = false   # required for NAT
+
+  tags = merge(
+    var.tags,
+    {
+      Name    = "${var.name_prefix}-nat"
+      Purpose = "nat-instance"
+    }
+  )
+}
+
+
+
 # Elastic IP for NAT Instance
 resource "aws_eip" "nat" {
   count  = var.create_nat_instance ? 1 : 0
   domain = "vpc"
+  instance_id = aws_instance.nat[0].id
+  allocation_id = aws_eip.nat[0].id
   
   tags = merge(
     var.tags,
@@ -206,6 +232,17 @@ resource "aws_route_table_association" "private" {
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private[count.index].id
 }
+
+# create a route for private subnets to route through NAT
+
+resource "aws_route" "private_to_nat" {
+  count = var.create_nat_instance ? length(var.availability_zones) : 0
+
+  route_table_id         = aws_route_table.private[count.index].id
+  destination_cidr_block = "0.0.0.0/0"
+  instance_id            = aws_instance.nat[0].id
+}
+
 
 # Database route table (if database subnets are created)
 resource "aws_route_table" "database" {
