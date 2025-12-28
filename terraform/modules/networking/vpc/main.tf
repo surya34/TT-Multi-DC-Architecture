@@ -70,7 +70,7 @@ resource "aws_instance" "nat" {
   ami           = var.nat_ami_id
   instance_type = var.nat_instance_type
   key_name      = var.key_name
-  subnet_id     = aws_subnet.public[0].id   # Put NAT in the first public subnet
+  subnet_id     = aws_subnet.public[count.index].id 
   associate_public_ip_address = true
   vpc_security_group_ids = [aws_security_group.nat.id]
   
@@ -85,7 +85,7 @@ resource "aws_instance" "nat" {
   tags = merge(
     var.tags,
     {
-      Name    = "${var.name_prefix}-nat"
+      Name    = "${var.name_prefix}-nat-${element(var.availability_zones, count.index)}"
       Purpose = "nat-instance"
     }
   )
