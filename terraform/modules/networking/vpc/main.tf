@@ -72,9 +72,15 @@ resource "aws_instance" "nat" {
   key_name      = var.key_name
   subnet_id     = aws_subnet.public[0].id   # Put NAT in the first public subnet
   associate_public_ip_address = true
-  security_groups = [aws_security_group.nat.name]
+  vpc_security_group_ids = [aws_security_group.nat.id]
+  
 
   source_dest_check = false   # required for NAT
+
+  depends_on = [
+    aws_security_group.nat,
+    aws_eip.nat
+  ]
 
   tags = merge(
     var.tags,
@@ -89,7 +95,7 @@ resource "aws_instance" "nat" {
 
 # Elastic IP for NAT Instance
 resource "aws_eip" "nat" {
-  count  = var.create_nat_instance ? 1 : 0
+  count  = var.create_nat_instance ? length(var.availability_zones) : 0
   domain = "vpc"
   
   tags = merge(
@@ -104,9 +110,9 @@ resource "aws_eip" "nat" {
 }
 
 resource "aws_eip_association" "nat" {
-  count      = var.create_nat_instance ? 1 : 0
-  instance_id   = aws_instance.nat[0].id
-  allocation_id = aws_eip.nat[0].id
+  count      = var.create_nat_instance ? length(var.availability_zones) : 0
+  network_interface_id = aws_instance.nat[count.index].primary_network_interface_id
+  allocation_id = aws_eip.nat[count.index].id
 }
 
 
@@ -278,7 +284,7 @@ resource "aws_route" "private_to_nat" {
 
   route_table_id         = aws_route_table.private[count.index].id
   destination_cidr_block = "0.0.0.0/0"
-  instance_id            = aws_instance.nat[count.index].id
+  network_interface_id = aws_instance.nat[count.index].primary_network_interface_id
   depends_on             = [aws_instance.nat]
 }
 

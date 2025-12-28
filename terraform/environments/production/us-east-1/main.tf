@@ -29,7 +29,7 @@ data "http" "my_ip" {
 # vpc module
 
 module "vpc" {
-  source = "../../../modules/Networking/vpc"
+  source = "../../../modules/networking/vpc"
 
   name_prefix           = local.name_prefix
   vpc_cidr              = var.vpc_cidr
@@ -37,8 +37,11 @@ module "vpc" {
   public_subnet_cidrs   = var.public_subnet_cidrs
   private_subnet_cidrs  = var.private_subnet_cidrs
   database_subnet_cidrs = var.database_subnet_cidrs
-
-
+  nat_ami_id            = var.nat_ami_id     
+  nat_instance_type     = var.nat_instance_type
+  key_name             = var.key_name
+  create_nat_instance  = var.create_nat_instance
+  
 
   enable_dns_hostnames = true
   enable_dns_support   = true
@@ -173,7 +176,7 @@ resource "aws_lambda_event_source_mapping" "sqs_es" {
 
 module "eks_workers" {
   source             = "../../../modules/compute/eks-workers"
-  cluster_name       = prod-video-eks-us-east-1
+  cluster_name       = var.cluster_name
   private_subnet_ids = module.vpc.private_subnet_ids
   tags               = var.mandatory_tags
 }

@@ -10,8 +10,12 @@ resource "aws_eks_cluster" "this" {
     endpoint_public_access  = false
   }
 
+  lifecycle {
+    prevent_destroy = false
+  }
+
   depends_on = [
-    aws_iam_role_policy_attachment.eks_cluster_policy
+    aws_iam_role_policy_attachment.eks_cluster_policy,
   ]
 }
 

@@ -81,6 +81,27 @@ variable "database_subnet_cidrs" {
   type        = list(string)
 }
 
+variable "create_nat_instance" {
+  type    = bool
+  default = true
+}
+
+variable "nat_ami_id" {
+  type = string
+  description = "AMI ID for NAT instance (Amazon Linux 2 NAT AMI)"
+}
+
+variable "nat_instance_type" {
+  type    = string
+  default = "t3.micro"
+}
+
+variable "key_name" {
+  type = string
+  description = "SSH key for NAT instance"
+}
+
+
 # VPC Features
 variable "enable_dns_hostnames" {
   description = "Enable DNS hostnames in VPC"
@@ -111,13 +132,6 @@ variable "create_database_subnets" {
   description = "Create dedicated database subnets"
   type        = bool
   default     = false
-}
-
-# NAT Configuration
-variable "create_nat_instance" {
-  description = "Create NAT instance (alternative to NAT Gateway)"
-  type        = bool
-  default     = true
 }
 
 # DHCP Options
