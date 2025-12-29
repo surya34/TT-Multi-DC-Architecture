@@ -3,3 +3,8 @@ variable "node_role_arn" {
   type        = string
 }
 
+variable "nat_management_role_arn" {
+  description = "NAT admin role to perform eks operations"
+  type        = string
+}
+

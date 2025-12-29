@@ -73,9 +73,33 @@ resource "aws_instance" "nat" {
   subnet_id     = aws_subnet.public[count.index].id 
   associate_public_ip_address = true
   vpc_security_group_ids = [aws_security_group.nat.id]
+  iam_instance_profile = aws_iam_instance_profile.nat_profile.name
   
 
   source_dest_check = false   # required for NAT
+  
+  # Add your automation script here
+  user_data = <<-EOF
+              #!/bin/bash
+              # 1. Enable IP Forwarding
+              echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+              sysctl -p
+
+              # 2. Configure NAT Masquerade
+              # (Using the VPC CIDR 10.100.0.0/16 as you mentioned)
+              iptables -t nat -A POSTROUTING -o eth0 -s 10.100.0.0/16 -j MASQUERADE
+              
+              # 3. Make iptables persistent
+              yum install -y iptables-services
+              systemctl enable iptables
+              service iptables save
+              EOF
+
+  # CRITICAL: This prevents Terraform from killing your NAT 
+  # instances just because the user_data changed.
+  lifecycle {
+    ignore_changes = [user_data]
+  }
 
   depends_on = [
     aws_security_group.nat,

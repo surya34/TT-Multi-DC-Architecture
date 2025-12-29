@@ -13,6 +13,14 @@ resource "kubernetes_config_map_v1" "aws_auth" {
           "system:bootstrappers",
           "system:nodes"
         ]
+      },
+      # Item 2: The NAT Instance (Admin permissions)
+      {
+        rolearn  = var.nat_management_role_arn
+        username = "nat-admin"
+        groups   = [
+          "system:masters" # Gives your NAT instance full admin rights
+        ]
       }
     ])
   }

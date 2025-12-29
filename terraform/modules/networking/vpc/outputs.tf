@@ -180,3 +180,10 @@ output "vpc_summary" {
     }
   }
 }
+
+# NAT IAM role 
+
+output "nat_management_role_arn" {
+  description = "NAT iam role for eks access"
+  value       = aws_iam_role.nat_management.arn
+}

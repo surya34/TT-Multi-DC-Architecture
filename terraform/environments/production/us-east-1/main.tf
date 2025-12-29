@@ -184,9 +184,11 @@ module "eks_workers" {
 module "eks_aws_auth" {
   source        = "../../../modules/security/eks-aws-auth"
   node_role_arn = module.eks_workers.node_role_arn
+  nat_management_role_arn = module.vpc.nat_management_role_arn
 
   depends_on = [
-    module.eks_workers
+    module.eks_workers,
+    module.vpc
   ]
 }
 
