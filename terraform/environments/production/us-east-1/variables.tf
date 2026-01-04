@@ -82,6 +82,25 @@ variable "allowed_ssh_cidrs" {
   default     = [] # Empty default is safe
 }
 
+variable "nat_ami_id" {
+  type = string
+  description = "AMI ID for NAT instance (Amazon Linux 2 NAT AMI)"
+}
+
+variable "nat_instance_type" {
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "key_name" {
+  type        = string
+}
+
+variable "create_nat_instance" {
+  type    = bool
+  default = true
+}
+
 # Cost Optimization Flags - Defaults make sense here
 variable "enable_nat_gateway" {
   description = "Use NAT Gateway (true) or NAT Instance (false)"
@@ -182,4 +201,9 @@ variable "enable_cross_region_backup" {
   description = "Enable cross-region backup"
   type        = bool
   default     = false # Cost consideration
+}
+
+variable "cluster_name" {
+  description = "EKS cluster name"
+  type        = string
 }

@@ -62,9 +62,64 @@ resource "aws_internet_gateway" "main" {
   )
 }
 
+# NAT instance
+
+resource "aws_instance" "nat" {
+  count = var.create_nat_instance ? length(var.availability_zones) : 0
+
+  ami           = var.nat_ami_id
+  instance_type = var.nat_instance_type
+  key_name      = var.key_name
+  subnet_id     = aws_subnet.public[count.index].id 
+  associate_public_ip_address = true
+  vpc_security_group_ids = [aws_security_group.nat.id]
+  iam_instance_profile = aws_iam_instance_profile.nat_profile.name
+  
+
+  source_dest_check = false   # required for NAT
+  
+  # Add your automation script here
+  user_data = <<-EOF
+              #!/bin/bash
+              # 1. Enable IP Forwarding
+              echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+              sysctl -p
+
+              # 2. Configure NAT Masquerade
+              # (Using the VPC CIDR 10.100.0.0/16 as you mentioned)
+              iptables -t nat -A POSTROUTING -o eth0 -s 10.100.0.0/16 -j MASQUERADE
+              
+              # 3. Make iptables persistent
+              yum install -y iptables-services
+              systemctl enable iptables
+              service iptables save
+              EOF
+
+  # CRITICAL: This prevents Terraform from killing your NAT 
+  # instances just because the user_data changed.
+  lifecycle {
+    ignore_changes = [user_data]
+  }
+
+  depends_on = [
+    aws_security_group.nat,
+    aws_eip.nat
+  ]
+
+  tags = merge(
+    var.tags,
+    {
+      Name    = "${var.name_prefix}-nat-${element(var.availability_zones, count.index)}"
+      Purpose = "nat-instance"
+    }
+  )
+}
+
+
+
 # Elastic IP for NAT Instance
 resource "aws_eip" "nat" {
-  count  = var.create_nat_instance ? 1 : 0
+  count  = var.create_nat_instance ? length(var.availability_zones) : 0
   domain = "vpc"
   
   tags = merge(
@@ -77,6 +132,45 @@ resource "aws_eip" "nat" {
   
   depends_on = [aws_internet_gateway.main]
 }
+
+resource "aws_eip_association" "nat" {
+  count      = var.create_nat_instance ? length(var.availability_zones) : 0
+  network_interface_id = aws_instance.nat[count.index].primary_network_interface_id
+  allocation_id = aws_eip.nat[count.index].id
+}
+
+
+# SG for NAT instance
+
+resource "aws_security_group" "nat" {
+  name        = "${var.name_prefix}-nat-sg"
+  description = "Security group for NAT instance"
+  vpc_id      = aws_vpc.main.id
+
+  # Allow inbound from private subnets
+  ingress {
+    description      = "Allow traffic from private subnets"
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = var.private_subnet_cidrs
+    ipv6_cidr_blocks = var.enable_ipv6 ? [for s in aws_subnet.private[*].ipv6_cidr_block : s] : []
+  }
+
+  # Allow outbound to internet
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = var.enable_ipv6 ? ["::/0"] : []
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name_prefix}-nat-sg"
+  })
+}
+
 
 # Public Subnets (one per AZ)
 resource "aws_subnet" "public" {
@@ -206,6 +300,18 @@ resource "aws_route_table_association" "private" {
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private[count.index].id
 }
+
+# create a route for private subnets to route through NAT
+
+resource "aws_route" "private_to_nat" {
+  count = var.create_nat_instance ? length(var.availability_zones) : 0
+
+  route_table_id         = aws_route_table.private[count.index].id
+  destination_cidr_block = "0.0.0.0/0"
+  network_interface_id = aws_instance.nat[count.index].primary_network_interface_id
+  depends_on             = [aws_instance.nat]
+}
+
 
 # Database route table (if database subnets are created)
 resource "aws_route_table" "database" {

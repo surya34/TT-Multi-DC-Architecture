@@ -47,6 +47,21 @@ provider "aws" {
   # }
 }
 
+# 1. Ask AWS directly for the Cluster details (This is "Grounding" the provider)
+data "aws_eks_cluster" "current" {
+  name = var.cluster_name # Use the variable, not the module output!
+}
+
+# 2. Ask AWS directly for the Token
+data "aws_eks_cluster_auth" "current" {
+  name = var.cluster_name
+}
+
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.current.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.current.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.current.token
+}
 
 provider "http" {}
 
